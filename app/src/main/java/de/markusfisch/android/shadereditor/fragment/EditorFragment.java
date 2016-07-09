@@ -24,10 +24,20 @@ public class EditorFragment extends Fragment
 {
 	public static final String TAG = "EditorFragment";
 
+	private ShaderEditor.OnTextChangedListener listener;
 	private InputMethodManager imm;
 	private ScrollView scrollView;
 	private ShaderEditor shaderEditor;
 	private int yOffset;
+
+	public static EditorFragment newInstance(
+		ShaderEditor.OnTextChangedListener listener )
+	{
+		EditorFragment fragment = new EditorFragment();
+		fragment.listener = listener;
+
+		return fragment;
+	}
 
 	@Override
 	public View onCreateView(
@@ -57,18 +67,8 @@ public class EditorFragment extends Fragment
 			return null;
 		}
 
-		try
-		{
-			shaderEditor.setOnTextChangedListener(
-				(ShaderEditor.OnTextChangedListener)activity );
-		}
-		catch( ClassCastException e )
-		{
-			throw new ClassCastException(
-				activity.toString()+
-				" must implement "+
-				"ShaderEditor.OnTextChangedListener" );
-		}
+		if( listener != null )
+			shaderEditor.setOnTextChangedListener( listener );
 
 		return view;
 	}

@@ -35,9 +35,7 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
-public class MainActivity
-	extends AppCompatActivity
-	implements ShaderEditor.OnTextChangedListener
+public class MainActivity extends AppCompatActivity
 {
 	private static final String SELECTED_SHADER = "selected_shader";
 	private static final int PREVIEW_SHADER = 1;
@@ -217,20 +215,6 @@ public class MainActivity
 	}
 
 	@Override
-	public void onTextChanged( String text )
-	{
-		if( !ShaderEditorApplication
-				.preferences
-				.doesRunOnChange() )
-			return;
-
-		if( editorFragment != null )
-			editorFragment.hideError();
-
-		setFragmentShader( text );
-	}
-
-	@Override
 	protected void onActivityResult(
 		int requestCode,
 		int resultCode,
@@ -286,7 +270,25 @@ public class MainActivity
 				getSupportFragmentManager().findFragmentByTag(
 					EditorFragment.TAG )) == null )
 		{
-			editorFragment = new EditorFragment();
+			editorFragment = EditorFragment.newInstance(
+				new ShaderEditor.OnTextChangedListener()
+				{
+					@Override
+					public void onTextChanged( String text )
+					{
+						if( editorFragment != null )
+							editorFragment.hideError();
+
+						if( ShaderEditorApplication
+								.preferences
+								.doesRunOnChange() )
+							setFragmentShader( text );
+						else if( !ShaderEditorApplication
+								.preferences
+								.doesRunInBackground() )
+							showPreview( text );
+					}
+				} );
 
 			getSupportFragmentManager()
 				.beginTransaction()
@@ -1032,6 +1034,11 @@ public class MainActivity
 		intent.putExtra(
 			PreviewActivity.FRAGMENT_SHADER,
 			src );
+
+		intent.addFlags(
+			Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT |
+			// FLAG_ACTIVITY_NEW_DOCUMENT does not work here - why?
+			Intent.FLAG_ACTIVITY_NEW_TASK );
 
 		startActivityForResult( intent, PREVIEW_SHADER );
 	}
